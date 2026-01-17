@@ -33,9 +33,7 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
     - name: Upload Docker image to server
-      run: |
-        scp python-hello.tar \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+      run: scp python-hello.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
     - name: Load and run Docker container on server
       run: |
