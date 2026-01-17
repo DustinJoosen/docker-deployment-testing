@@ -35,4 +35,5 @@ jobs:
         run: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           docker rm -f python-hello || true &&
           docker load -i /tmp/python-hello.tar &&
-          docker run -d --name python-hello -p 5000:5000 python-hello"
+          docker image prune -f || true &&
+          docker run -d --name python-hello -p 5000:5000 --restart unless-stopped python-hello"
