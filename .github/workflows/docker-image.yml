@@ -1,4 +1,4 @@
-name: Server-side Docker Deployment
+name: Deploy Python Docker App
 
 on:
   push:
@@ -12,26 +12,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up SSH agent
+      - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Build Docker image
+        run: docker build -t python-hello .
+
+      - name: Save Docker image to tarball
+        run: docker save python-hello -o python-hello.tar
 
       - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Sync app to server
-        run: rsync -av --delete ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/deploy_temp/
+      - name: Upload Docker image to server
+        run: scp python-hello.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
-      - name: Build & run container on server
+      - name: Deploy on server
         run: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-          cd ~/deploy_temp &&
           docker rm -f python-hello || true &&
-          docker build -t python-hello . &&
+          docker load -i /tmp/python-hello.tar &&
           docker run -d --name python-hello -p 5000:5000 python-hello"
-
-      - name: Cleanup server temp folder
-        run: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-          rm -rf ~/deploy_temp"
